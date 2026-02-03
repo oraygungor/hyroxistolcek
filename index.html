@@ -11,13 +11,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- Tailwind & Icons -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; cursor: default; touch-action: none; /* Browser zoomunu engelle */ }
+        /* 100dvh mobilde adres çubuğu sorununu çözer */
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; cursor: default; touch-action: none; height: 100dvh; width: 100vw; }
         
-        #main-layout { display: flex; height: 100vh; position: relative; }
+        #main-layout { display: flex; height: 100dvh; position: relative; overflow: hidden; }
 
         /* --- GLASSMORPHISM --- */
         .glass-panel {
@@ -41,7 +43,7 @@
             z-index: 900;
             flex-shrink: 0;
             position: absolute; height: 100%; left: 0; top: 0;
-            transform: translateX(-330px); /* Varsayılan kapalı */
+            transform: translateX(-330px);
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             background: #fff;
         }
@@ -50,9 +52,8 @@
 
         /* Desktop Hover Trigger */
         @media (min-width: 768px) {
-            #sidebar { transform: translateX(-305px); } /* Masaüstünde kulakçık kalsın */
+            #sidebar { transform: translateX(-305px); } 
             #sidebar:hover { transform: translateX(0); }
-            /* Görsel Tutamaç (Sadece Desktop) */
             #sidebar::after {
                 content: ''; position: absolute; right: -12px; top: 50%; transform: translateY(-50%);
                 width: 12px; height: 80px;
@@ -72,19 +73,20 @@
             flex-grow: 1;
             background: radial-gradient(circle at center, #e2e8f0 0%, #cbd5e1 100%);
             position: relative;
-            overflow: hidden; /* Native scroll yerine JS ile yöneteceğiz */
+            overflow: hidden; /* Native scroll kapalı, JS ile yönetilecek */
             display: block; width: 100%; height: 100%;
             cursor: grab;
-            touch-action: none; /* Full JS control */
+            touch-action: none; 
         }
         #canvas-area:active { cursor: grabbing; }
 
         #canvas-content-centerer {
-            transform-origin: 0 0; /* Zoom ve Pan için önemli */
+            transform-origin: 0 0; 
             width: fit-content; height: fit-content;
             min-width: 100%; min-height: 100%;
             display: flex; align-items: center; justify-content: center;
-            padding: 50px; box-sizing: border-box;
+            padding: 100px; /* Kenarlara yapışmasın diye padding */
+            box-sizing: border-box;
         }
 
         #canvas-wrapper {
@@ -92,6 +94,7 @@
             box-shadow: 0 20px 50px rgba(0,0,0,0.15);
             border-radius: 4px;
             display: block; margin: auto;
+            transform-origin: center center;
         }
 
         canvas { display: block; }
@@ -103,7 +106,6 @@
             position: fixed; top: 0; left: 0; pointer-events: none; z-index: 99999;
             transition: opacity 0.1s ease-out;
         }
-        /* Mobilde özel imleci gizle */
         @media (hover: none) and (pointer: coarse) {
             #cursor-follower { display: none !important; }
             #canvas-content-centerer, #draw-layer { cursor: crosshair !important; }
@@ -129,7 +131,7 @@
         #mini-action-menu.visible { opacity: 1; pointer-events: auto; }
 
         .mini-btn {
-            width: 40px; height: 40px; border-radius: 50%; /* Mobilde daha büyük */
+            width: 40px; height: 40px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
             font-size: 16px; cursor: pointer; border: none; color: white;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
@@ -166,14 +168,13 @@
         };
     </script>
 
-    <!-- Cursor Follower (Desktop Only) -->
+    <!-- Cursor Follower -->
     <div id="cursor-follower" class="hidden md:block opacity-0">
         <div id="cursor-dot"></div>
     </div>
 
     <div id="main-layout">
         
-        <!-- Mobil Menu Butonu -->
         <button id="mobile-menu-btn" onclick="toggleSidebar()" class="glass-floating shadow-lg">
             <i class="fa-solid fa-bars text-xl"></i>
         </button>
@@ -186,7 +187,7 @@
                         <span class="bg-blue-600 text-white rounded p-1 text-xs"><i class="fa-solid fa-vector-square"></i></span>
                         Hyrox Plan
                     </h1>
-                    <p class="text-xs text-slate-500 mt-1 font-medium ml-1">Mobil Uyumlu v6.0</p>
+                    <p class="text-xs text-slate-500 mt-1 font-medium ml-1">v7.0 Final (Mobil+Desktop)</p>
                 </div>
                 <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-red-500 p-2">
                     <i class="fa-solid fa-xmark text-xl"></i>
@@ -194,7 +195,6 @@
             </div>
 
             <div class="flex-1 overflow-y-auto p-6 space-y-6">
-                <!-- Durum -->
                 <div class="bg-white/60 p-4 rounded-xl border border-white shadow-sm">
                     <div class="flex justify-between items-center mb-2">
                         <label class="text-xs font-bold text-slate-500 uppercase">Mod</label>
@@ -202,12 +202,13 @@
                     </div>
                     <div class="text-xs text-slate-500 mt-2 space-y-1">
                         <p>👆 <strong>Tek Parmak:</strong> Kaydır / Tıkla (Nokta)</p>
-                        <p>✌️ <strong>İki Parmak:</strong> Zoom Yap</p>
-                        <p>Kısa dokunuş nokta koyar, sürükleme haritayı kaydırır.</p>
+                        <p>✌️ <strong>İki Parmak:</strong> Zoom (Kıstır)</p>
+                        <div class="pt-2 border-t border-slate-200 mt-2">
+                            <button onclick="startCalibrationMode()" class="text-blue-600 hover:underline font-bold">Kalibrasyon Moduna Geç</button>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Liste -->
                 <div id="sidebar-results-container">
                     <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Ölçümler</h3>
                     <div id="results-body" class="space-y-2">
@@ -236,7 +237,6 @@
                     <canvas id="pdf-render"></canvas>
                     <canvas id="draw-layer"></canvas>
                     
-                    <!-- MINI MENU -->
                     <div id="mini-action-menu">
                         <button onclick="completeMeasurement(event)" class="mini-btn btn-check"><i class="fa-solid fa-check"></i></button>
                         <button onclick="undoLastPoint(event)" class="mini-btn btn-undo"><i class="fa-solid fa-rotate-left"></i></button>
@@ -308,19 +308,14 @@
         let mousePos = { x: 0, y: 0 };
         let hoverStartPoint = false; 
         
-        // --- MOBILE GESTURE VARIABLES ---
+        // --- TOUCH & PAN VARIABLES ---
         let touchState = {
-            scale: 1,
-            panning: false,
-            pinching: false,
-            startX: 0, startY: 0,
-            lastX: 0, lastY: 0,
-            startDist: 0,
-            tapStartTime: 0
+            scale: 1, panning: false, pinching: false,
+            startX: 0, startY: 0, lastX: 0, lastY: 0,
+            startDist: 0, startScale: 1, tapStartTime: 0
         };
-        
-        // Canvas scroll offset simulation for pan
-        let panOffset = { x: 0, y: 0 };
+        let tempPinchScale = 1;
+        let isDragActive = false; // Dragging flag to prevent clicks
 
         const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#6366f1'];
 
@@ -329,142 +324,123 @@
         const drawCanvas = document.getElementById('draw-layer');
         const drawCtx = drawCanvas.getContext('2d');
         const canvasAreaEl = document.getElementById('canvas-area');
-        const contentCenterer = document.getElementById('canvas-content-centerer');
         const loadingMsg = document.getElementById('loading-msg');
         const miniMenu = document.getElementById('mini-action-menu');
         
-        // --- MOBILE TOUCH LOGIC ---
-        
+        // --- TOUCH EVENTS (PINCH & ZOOM) ---
         canvasAreaEl.addEventListener('touchstart', (e) => {
-            if (e.target.closest('.mini-btn')) return; // Menü butonlarına dokunma
+            if (e.target.closest('.mini-btn')) return; 
             
             if (e.touches.length === 1) {
-                // Tek Parmak: Pan hazırlığı veya Tap
-                touchState.panning = true;
+                // Tek Parmak: Pan (Native Scroll için değerleri tut) veya Tap
+                touchState.panning = true; 
                 touchState.pinching = false;
-                touchState.startX = e.touches[0].clientX;
+                touchState.startX = e.touches[0].clientX; 
                 touchState.startY = e.touches[0].clientY;
-                touchState.lastX = e.touches[0].clientX;
+                touchState.lastX = e.touches[0].clientX; 
                 touchState.lastY = e.touches[0].clientY;
                 touchState.tapStartTime = Date.now();
-                
-                // Koordinat al (Nokta koyma ihtimaline karşı)
                 updateMousePosFromTouch(e.touches[0]);
                 
             } else if (e.touches.length === 2) {
                 // İki Parmak: Pinch Zoom
-                touchState.panning = false;
+                e.preventDefault(); // Browser zoomunu engelle
+                touchState.panning = false; 
                 touchState.pinching = true;
                 touchState.startDist = Math.hypot(
                     e.touches[0].clientX - e.touches[1].clientX,
                     e.touches[0].clientY - e.touches[1].clientY
                 );
+                touchState.startScale = currentScale;
+                canvasWrapper.style.transition = 'none'; 
             }
         }, { passive: false });
 
         canvasAreaEl.addEventListener('touchmove', (e) => {
-            e.preventDefault(); // Browser scroll'u engelle
-            
             if (touchState.panning && e.touches.length === 1) {
+                // Native scroll'a izin ver, ama koordinatları güncelle
                 const dx = e.touches[0].clientX - touchState.lastX;
                 const dy = e.touches[0].clientY - touchState.lastY;
-                
-                // Pan: Scroll pozisyonunu güncelle
-                canvasAreaEl.scrollLeft -= dx;
-                canvasAreaEl.scrollTop -= dy;
-                
-                touchState.lastX = e.touches[0].clientX;
+                // JS Scroll (Eğer native scroll çalışmazsa diye fallback)
+                // canvasAreaEl.scrollLeft -= dx; canvasAreaEl.scrollTop -= dy;
+                touchState.lastX = e.touches[0].clientX; 
                 touchState.lastY = e.touches[0].clientY;
                 
             } else if (touchState.pinching && e.touches.length === 2) {
+                e.preventDefault(); // Pinch sırasında native zoom/scroll engelle
                 const dist = Math.hypot(
                     e.touches[0].clientX - e.touches[1].clientX,
                     e.touches[0].clientY - e.touches[1].clientY
                 );
+                const scaleFactor = dist / touchState.startDist;
+                tempPinchScale = touchState.startScale * scaleFactor;
+                if (tempPinchScale < 0.1) tempPinchScale = 0.1;
                 
-                // Pinch farkı
-                const delta = dist - touchState.startDist;
-                
-                // Zoom Hassasiyeti (Çok hızlı olmasın)
-                if (Math.abs(delta) > 10) {
-                    const zoomChange = delta * 0.002; // Hassas çarpan
-                    // Canlı zoom yerine işlem bitince render edelim (performans)
-                    // Şimdilik sadece render çağırıyoruz ama debounced olsa iyi olurdu.
-                    // Mobilde her pixelde render PDF'i kasar.
-                    // Burada basitleştirilmiş mantık:
-                    // Sadece touch bitince zoom yaparsak daha akıcı olur ama kullanıcı görmez.
-                    // O yüzden adım adım yapalım.
-                }
+                // CSS Preview
+                canvasWrapper.style.transform = `scale(${scaleFactor})`;
             }
         }, { passive: false });
 
         canvasAreaEl.addEventListener('touchend', (e) => {
-            // TAP DETECTION (Kısa dokunuş ve az hareket)
             if (touchState.panning && !touchState.pinching && e.changedTouches.length > 0) {
                 const duration = Date.now() - touchState.tapStartTime;
-                const distMoved = Math.hypot(
-                    e.changedTouches[0].clientX - touchState.startX,
-                    e.changedTouches[0].clientY - touchState.startY
-                );
+                const distMoved = Math.hypot(e.changedTouches[0].clientX - touchState.startX, e.changedTouches[0].clientY - touchState.startY);
                 
-                // Eğer kısa süre basıldıysa ve parmak çok oynamadıysa -> BU BİR TIKLAMADIR (Nokta koy)
+                // Eğer kısa dokunuşsa ve hareket azsa -> TAP (Nokta Ekle)
                 if (duration < 300 && distMoved < 10) {
-                    // Tap işlemi
-                    handleAction({ 
-                        clientX: e.changedTouches[0].clientX, 
-                        clientY: e.changedTouches[0].clientY 
-                    });
-                    
-                    // Menüyü mobilde kapat (Sidebar)
+                    handleAction({ clientX: e.changedTouches[0].clientX, clientY: e.changedTouches[0].clientY });
                     document.getElementById('sidebar').classList.remove('open');
                 }
             }
             
             if(touchState.pinching && e.touches.length < 2) {
                 touchState.pinching = false;
-                // Zoom bittiğinde render'ı netleştir (gerekirse)
+                canvasWrapper.style.transition = 'transform 0.1s ease-out';
+                canvasWrapper.style.transform = 'none'; 
+                renderPageWithScale(tempPinchScale);
             }
         });
 
-        // --- DESKTOP MOUSE EVENTS (Legacy support) ---
+        // --- DESKTOP MOUSE PANNING ---
         canvasAreaEl.addEventListener('mousedown', (e) => {
             if(e.button !== 0 || e.target.closest('.mini-btn')) return;
             touchState.panning = true;
             touchState.startX = e.clientX; touchState.startY = e.clientY;
+            isDragActive = false; // Reset drag flag
             canvasAreaEl.style.cursor = 'grabbing';
         });
         
         window.addEventListener('mousemove', (e) => {
+            // Mouse Pan logic
             if(touchState.panning && e.buttons === 1) {
                 const dx = e.clientX - touchState.startX;
                 const dy = e.clientY - touchState.startY;
-                canvasAreaEl.scrollLeft -= dx;
+                
+                // Eğer hareket varsa drag başladı demektir
+                if (Math.abs(dx) > 5 || Math.abs(dy) > 5) isDragActive = true;
+
+                canvasAreaEl.scrollLeft -= dx; 
                 canvasAreaEl.scrollTop -= dy;
+                
                 touchState.startX = e.clientX; touchState.startY = e.clientY;
                 document.getElementById('cursor-follower').classList.add('opacity-0');
             } else {
-                // Hover cursor logic (Desktop only)
                 updateDesktopCursor(e);
             }
         });
 
         window.addEventListener('mouseup', (e) => {
             if(touchState.panning) {
-                const dist = Math.hypot(e.clientX - touchState.startX, e.clientY - touchState.startY); // Yanlış mantık mouse'ta startX sürekli güncelleniyor.
-                // Mouse'ta click event ayrı çalışır, pan ayrı.
                 canvasAreaEl.style.cursor = 'default';
                 touchState.panning = false;
+                // Click event'inin drag sonrası çalışmasını engellemek için isDragActive flag'i kullanılıyor
             }
         });
         
-        // Tıklama (Desktop Click)
-        // Pan yapıldıysa click tetiklenmemeli. Bunu basit bir flag ile çözebiliriz ama
-        // Native click event'i pan yapınca bazen tetiklenmez.
         drawCanvas.addEventListener('click', (e) => {
-            // Eğer sidebar açıksa kapat
-            // document.getElementById('sidebar').classList.remove('open');
-            // Buton değilse işlem yap
-            if(!e.target.closest('.mini-btn')) handleAction(e);
+            if(e.target.closest('.mini-btn')) return;
+            // Eğer sürükleme yapıldıysa tıklama yapma
+            if(!isDragActive) handleAction(e);
         });
 
         // --- HELPERS ---
@@ -472,30 +448,16 @@
             const rect = drawCanvas.getBoundingClientRect();
             const scaleX = drawCanvas.width / rect.width;
             const scaleY = drawCanvas.height / rect.height;
-            mousePos = {
-                x: (touch.clientX - rect.left) * scaleX,
-                y: (touch.clientY - rect.top) * scaleY
-            };
+            mousePos = { x: (touch.clientX - rect.left) * scaleX, y: (touch.clientY - rect.top) * scaleY };
         }
 
         function getEventPos(evt) {
-            // Mouse veya Touch pozisyonunu normalize et
             const rect = drawCanvas.getBoundingClientRect();
             const scaleX = drawCanvas.width / rect.width;
             const scaleY = drawCanvas.height / rect.height;
-            
-            let cx = evt.clientX;
-            let cy = evt.clientY;
-            
-            // Eğer manuel tetiklediysek (handleAction call from touchend)
-            if (evt.clientX === undefined && evt.touches) {
-                 // Touch logic handled in updateMousePosFromTouch usually
-            }
-
-            return {
-                x: (cx - rect.left) * scaleX,
-                y: (cy - rect.top) * scaleY
-            };
+            let cx = evt.clientX, cy = evt.clientY;
+            if(evt.touches && evt.touches.length > 0) { cx = evt.touches[0].clientX; cy = evt.touches[0].clientY; }
+            return { x: (cx - rect.left) * scaleX, y: (cy - rect.top) * scaleY };
         }
 
         // --- LOGIC ---
@@ -503,38 +465,48 @@
             const pos = getEventPos(e);
             if (appState === 'CALIBRATING') {
                 if(hoverStartPoint) finishCalibration();
-                else { 
-                    currentDrawing.points.push({ x: pos.x, y: pos.y }); 
-                    updateMiniMenuPosition(); redrawCanvas(); 
-                }
+                else { currentDrawing.points.push({ x: pos.x, y: pos.y }); updateMiniMenuPosition(); redrawCanvas(); }
             } else {
-                currentDrawing.points.push({ x: pos.x, y: pos.y });
-                updateMiniMenuPosition(); redrawCanvas();
+                currentDrawing.points.push({ x: pos.x, y: pos.y }); updateMiniMenuPosition(); redrawCanvas();
             }
         }
 
         function updateDesktopCursor(e) {
             const follower = document.getElementById('cursor-follower');
+            // Anlık takip
             follower.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
             
+            // Hover check in mousemove
             const isOverMap = e.target.id === 'draw-layer';
+            // Eğer mouse harita üzerinde ve sürükleme yapılmıyorsa göster
             if (isOverMap && !touchState.panning) {
                 follower.classList.remove('opacity-0');
                 drawCanvas.style.cursor = 'none';
+                
+                // Calibration hover logic check
+                const pos = getEventPos(e);
+                hoverStartPoint = false;
+                if (appState === 'CALIBRATING' && currentDrawing.points.length > 2) {
+                    const startPt = currentDrawing.points[0];
+                    const dist = Math.hypot(startPt.x - pos.x, startPt.y - pos.y);
+                    if (dist < 20) hoverStartPoint = true;
+                }
+                
+                // Cursor style update handled in CSS via classes or simple logic
+                // Burada sade tuttum
+                
             } else {
                 follower.classList.add('opacity-0');
                 drawCanvas.style.cursor = touchState.panning ? 'grabbing' : 'default';
             }
         }
 
-        // --- ZOOM WHEEL ---
         canvasAreaEl.addEventListener('wheel', (e) => {
-            if (e.ctrlKey) return; 
-            e.preventDefault();
+            if (e.ctrlKey) return; e.preventDefault();
             changeZoom(e.deltaY > 0 ? -0.1 : 0.1);
         }, { passive: false });
 
-        // --- INIT & LOADING ---
+        // --- INIT ---
         window.onload = async function() {
             loadingMsg.classList.remove('hidden');
             setupNextDrawing();
@@ -542,51 +514,41 @@
                 const response = await fetch(CONFIG.pdfPath);
                 if (!response.ok) throw new Error("Dosya yok");
                 const blob = await response.blob();
-                const arrayBuffer = await blob.arrayBuffer();
-                await loadPDF(new Uint8Array(arrayBuffer));
+                await loadPDF(new Uint8Array(await blob.arrayBuffer()));
             } catch (e) {
-                console.warn("Otomatik yükleme hatası:", e);
                 loadingMsg.classList.add('hidden');
                 document.getElementById('manual-upload-area').style.display = 'block';
             }
         };
 
         document.getElementById('manual-file-upload').addEventListener('change', async function(e) {
-            const file = e.target.files[0];
-            if(!file) return;
+            if(!e.target.files[0]) return;
             loadingMsg.classList.remove('hidden');
             document.getElementById('manual-upload-area').style.display = 'none';
-            const fileReader = new FileReader();
-            fileReader.onload = function() { loadPDF(new Uint8Array(this.result)); };
-            fileReader.readAsArrayBuffer(file);
+            const reader = new FileReader();
+            reader.onload = function() { loadPDF(new Uint8Array(this.result)); };
+            reader.readAsArrayBuffer(e.target.files[0]);
         });
 
-        // --- PDF CORE ---
         async function loadPDF(data) {
             try {
                 pdfDoc = await pdfjsLib.getDocument(data).promise;
-                const page = await pdfDoc.getPage(1);
-                const viewport = page.getViewport({ scale: 1.0 });
-                baseViewportWidth = viewport.width;
                 loadingMsg.classList.add('hidden');
                 canvasWrapper.classList.remove('hidden');
                 fitToScreen();
-                showToast("Hazır! Başlamak için tıklayın.");
+                showToast("Hazır!");
             } catch (err) {
-                console.error(err);
                 loadingMsg.classList.add('hidden');
-                showToast("PDF Hatası!");
-                document.getElementById('manual-upload-area').style.display = 'block';
+                showToast("Hata!");
             }
         }
 
         function fitToScreen() {
             if (!pdfDoc) return;
             const containerWidth = document.getElementById('canvas-area').clientWidth;
-            // Mobilde daha fazla boşluk bırakma, tam sığdır
             const availableWidth = containerWidth < 768 ? containerWidth : containerWidth * 0.90; 
-            const newScale = availableWidth / baseViewportWidth;
-            renderPageWithScale(newScale);
+            const newScale = availableWidth / 600; // approx width
+            renderPageWithScale(newScale > 0.5 ? newScale : 0.5);
         }
 
         async function changeZoom(delta) {
@@ -613,32 +575,26 @@
             if (oldScale !== currentScale) {
                 const ratio = currentScale / oldScale;
                 measurements.forEach(m => m.points = m.points.map(p => ({ x: p.x * ratio, y: p.y * ratio })));
-                if (currentDrawing.points.length > 0) {
-                    currentDrawing.points = currentDrawing.points.map(p => ({ x: p.x * ratio, y: p.y * ratio }));
-                }
+                if (currentDrawing.points.length > 0) currentDrawing.points = currentDrawing.points.map(p => ({ x: p.x * ratio, y: p.y * ratio }));
             }
             redrawCanvas();
             isRendering = false;
         }
 
-        // --- APP LOGIC ---
         function setupNextDrawing() {
             const nextColor = COLORS[measurements.length % COLORS.length];
             currentDrawing = { points: [], color: nextColor };
             appState = 'MEASURING';
-            document.getElementById('status-badge').innerText = "Ölçüme Hazır";
+            document.getElementById('status-badge').innerText = "Ölçüm";
             miniMenu.classList.remove('visible'); 
         }
 
         function updateMiniMenuPosition() {
             if (currentDrawing.points.length > 0 && appState === 'MEASURING') {
                 const lastPt = currentDrawing.points[currentDrawing.points.length - 1];
-                miniMenu.style.left = lastPt.x + 'px';
-                miniMenu.style.top = (lastPt.y - 45) + 'px'; 
+                miniMenu.style.left = lastPt.x + 'px'; miniMenu.style.top = (lastPt.y - 45) + 'px'; 
                 miniMenu.classList.add('visible');
-            } else {
-                miniMenu.classList.remove('visible');
-            }
+            } else { miniMenu.classList.remove('visible'); }
         }
 
         function completeMeasurement(e) {
@@ -653,16 +609,13 @@
         function undoLastPoint(e) {
             if(e) e.stopPropagation();
             if (currentDrawing.points.length > 0) {
-                currentDrawing.points.pop();
-                updateMiniMenuPosition(); redrawCanvas();
+                currentDrawing.points.pop(); updateMiniMenuPosition(); redrawCanvas();
             }
         }
 
         function cancelAction(e) {
             if(e) e.stopPropagation();
-            setupNextDrawing();
-            redrawCanvas();
-            showToast("İptal edildi");
+            setupNextDrawing(); redrawCanvas(); showToast("İptal edildi");
         }
 
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
@@ -670,14 +623,11 @@
         function saveMeasurementName() {
             const name = document.getElementById('measure-name-input').value || `Ölçüm ${measurements.length + 1}`;
             let totalPx = 0;
-            for(let i=1; i<currentDrawing.points.length; i++) {
-                totalPx += Math.hypot(currentDrawing.points[i].x - currentDrawing.points[i-1].x, currentDrawing.points[i].y - currentDrawing.points[i-1].y);
-            }
+            for(let i=1; i<currentDrawing.points.length; i++) totalPx += Math.hypot(currentDrawing.points[i].x - currentDrawing.points[i-1].x, currentDrawing.points[i].y - currentDrawing.points[i-1].y);
             const lengthM = totalPx / (baseScaleFactor * currentScale);
             measurements.push({ id: Date.now(), name: name, points: [...currentDrawing.points], color: currentDrawing.color, length: lengthM });
             document.getElementById('name-modal').classList.add('hidden');
-            updateMeasurementList(); setupNextDrawing(); redrawCanvas();
-            showToast("Kaydedildi");
+            updateMeasurementList(); setupNextDrawing(); redrawCanvas(); showToast("Kaydedildi");
         }
 
         function updateMeasurementList() {
@@ -689,9 +639,7 @@
                 grandTotal += m.length;
                 const row = document.createElement('div');
                 row.className = 'result-row';
-                row.innerHTML = `
-                    <div class="flex items-center gap-2 overflow-hidden"><span class="color-dot" style="background-color: ${m.color}"></span><span class="font-medium text-slate-700 truncate text-sm">${m.name}</span></div>
-                    <div class="flex items-center gap-2 shrink-0"><span class="font-mono font-bold text-slate-800 text-xs bg-slate-100 px-2 py-1 rounded">${m.length.toFixed(2)}m</span><button onclick="deleteMeasurement(${index})" class="text-slate-300 hover:text-red-500 px-1"><i class="fa-solid fa-xmark"></i></button></div>`;
+                row.innerHTML = `<div class="flex items-center gap-2 overflow-hidden"><span class="color-dot" style="background-color: ${m.color}"></span><span class="font-medium text-slate-700 truncate text-sm">${m.name}</span></div><div class="flex items-center gap-2 shrink-0"><span class="font-mono font-bold text-slate-800 text-xs bg-slate-100 px-2 py-1 rounded">${m.length.toFixed(2)}m</span><button onclick="deleteMeasurement(${index})" class="text-slate-300 hover:text-red-500 px-1"><i class="fa-solid fa-xmark"></i></button></div>`;
                 listBody.appendChild(row);
             });
             document.getElementById('grand-total-sidebar').innerText = grandTotal.toFixed(2);
@@ -701,19 +649,15 @@
         function clearAllMeasurements() { if(confirm("Silinsin mi?")) { measurements = []; updateMeasurementList(); redrawCanvas(); } }
 
         function startCalibrationMode() {
-            appState = 'CALIBRATING';
-            currentDrawing = { points: [], color: '#f97316' }; 
-            showToast("Referans köşeleri seçin");
-            document.getElementById('status-badge').innerText = "Kalibrasyon";
-            document.getElementById('sidebar').classList.remove('open');
+            appState = 'CALIBRATING'; currentDrawing = { points: [], color: '#f97316' }; 
+            showToast("Köşeleri seçin"); document.getElementById('status-badge').innerText = "Kalibrasyon"; document.getElementById('sidebar').classList.remove('open');
         }
 
         function startMeasurementMode() { setupNextDrawing(); showToast("Ölçüme başla"); document.getElementById('sidebar').classList.remove('open'); }
 
         function finishCalibration() {
             if (currentDrawing.points.length > 2) {
-                document.getElementById('modal-area-input').value = '';
-                document.getElementById('area-modal').classList.remove('hidden');
+                document.getElementById('modal-area-input').value = ''; document.getElementById('area-modal').classList.remove('hidden');
             }
         }
 
@@ -734,8 +678,7 @@
         function calculatePolygonArea(points) {
             let total = 0;
             for (let i = 0, l = points.length; i < l; i++) {
-                total += (points[i].x * points[i==l-1?0:i+1].y * 0.5);
-                total -= (points[i==l-1?0:i+1].x * points[i].y * 0.5);
+                total += (points[i].x * points[i==l-1?0:i+1].y * 0.5); total -= (points[i==l-1?0:i+1].x * points[i].y * 0.5);
             }
             return Math.abs(total);
         }
@@ -744,20 +687,15 @@
             drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
             drawCtx.lineCap = 'round'; drawCtx.lineJoin = 'round';
             drawCtx.shadowColor = 'rgba(0, 0, 0, 0.25)'; drawCtx.shadowBlur = 4; drawCtx.shadowOffsetX = 1; drawCtx.shadowOffsetY = 1;
-            
             updateMiniMenuPosition();
-
             measurements.forEach(m => drawPolyline(m.points, m.color, m.length, false));
-
             if (currentDrawing.points.length > 0) {
                 let liveLen = 0;
                 if (appState === 'MEASURING' && baseScaleFactor) {
                     let totalPx = 0;
                     for(let i=1; i<currentDrawing.points.length; i++) totalPx += Math.hypot(currentDrawing.points[i].x - currentDrawing.points[i-1].x, currentDrawing.points[i].y - currentDrawing.points[i-1].y);
                     const lastP = currentDrawing.points[currentDrawing.points.length-1];
-                    if(mousePos.x !== 0 && mousePos.y !== 0 && !touchState.panning) {
-                         totalPx += Math.hypot(mousePos.x - lastP.x, mousePos.y - lastP.y);
-                    }
+                    if(mousePos.x !== 0 && mousePos.y !== 0 && !touchState.panning) totalPx += Math.hypot(mousePos.x - lastP.x, mousePos.y - lastP.y);
                     liveLen = totalPx / (baseScaleFactor * currentScale);
                 }
                 drawPolyline(currentDrawing.points, currentDrawing.color, liveLen, true);
@@ -783,7 +721,6 @@
                 drawCtx.beginPath(); drawCtx.arc(p.x, p.y, 5, 0, Math.PI * 2);
                 drawCtx.fillStyle = '#ffffff'; drawCtx.fill(); drawCtx.lineWidth = 2; drawCtx.stroke();
             });
-
             if (typeof lengthVal === 'number' && lengthVal > 0) {
                 const label = `${lengthVal.toFixed(2)}m`;
                 let lx, ly;
