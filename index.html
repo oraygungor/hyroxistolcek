@@ -68,7 +68,7 @@
             justify-content: center;
             align-items: flex-start;
             padding: 40px;
-            cursor: none; /* Mouse'u biz yöneteceğiz */
+            cursor: default; /* DÜZELTME: Mouse varsayılan olarak görünsün */
             width: 100%;
         }
 
@@ -78,6 +78,9 @@
             border-radius: 4px; /* Hafif yumuşatma */
             overflow: hidden;
             transition: transform 0.1s ease-out;
+            /* Önemli: Canvas wrapper boyutu mouse hesabını etkilemesin diye */
+            display: inline-block; 
+            vertical-align: top;
         }
         
         canvas { display: block; }
@@ -92,18 +95,19 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            transform: translate(-50%, -50%);
-            transition: opacity 0.2s;
+            /* transform burada JS ile yönetiliyor, CSS'te sadece transition veriyoruz */
+            transition: opacity 0.1s ease-out;
+            /* Mouse olaylarını engelle ki arkadaki canvas tıklanabilsin */
         }
         #cursor-dot {
-            width: 12px; height: 12px;
-            background: rgba(37, 99, 235, 0.8);
+            width: 10px; height: 10px; /* Biraz küçülttük daha hassas hissettirsin */
+            background: rgba(37, 99, 235, 0.9);
             border: 2px solid white;
             border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
         #cursor-tooltip {
-            background: rgba(15, 23, 42, 0.85);
+            background: rgba(15, 23, 42, 0.9);
             color: white;
             padding: 4px 10px;
             border-radius: 6px;
@@ -111,6 +115,7 @@
             font-weight: 500;
             white-space: nowrap;
             backdrop-filter: blur(4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         /* Floating Result Table */
@@ -182,6 +187,11 @@
             background: rgba(15, 23, 42, 0.4);
             backdrop-filter: blur(4px);
         }
+        
+        /* Dosya Yükleme Alanı */
+        #manual-upload-area {
+            display: none; /* JS ile açılacak */
+        }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -216,7 +226,7 @@
                         <span class="bg-blue-600 text-white rounded p-1 text-xs"><i class="fa-solid fa-vector-square"></i></span>
                         Hyrox Plan
                     </h1>
-                    <p class="text-xs text-slate-500 mt-1 font-medium ml-1">İnteraktif Ölçüm v3.0</p>
+                    <p class="text-xs text-slate-500 mt-1 font-medium ml-1">İnteraktif Ölçüm v3.1</p>
                 </div>
                 <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-red-500 transition">
                     <i class="fa-solid fa-xmark text-xl"></i>
@@ -304,13 +314,21 @@
                 <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
                 <p class="text-slate-600 font-bold animate-pulse">Plan Yükleniyor...</p>
             </div>
-             <div id="error-msg" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center hidden p-8 glass-floating">
-                <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+            
+            <!-- Hata & Manuel Yükleme -->
+            <div id="manual-upload-area" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center p-8 glass-floating shadow-2xl">
+                <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-100">
+                    <i class="fa-solid fa-cloud-arrow-up text-2xl"></i>
                 </div>
-                <h3 class="text-lg font-bold text-slate-800 mb-1">Dosya Bulunamadı</h3>
-                <p class="text-sm text-slate-500">"hyroxistanbul.pdf" dosyası eksik.</p>
+                <h3 class="text-lg font-bold text-slate-800 mb-2">Dosya Bulunamadı</h3>
+                <p class="text-sm text-slate-500 mb-6">Otomatik yükleme başarısız oldu.<br>Lütfen kendi PDF dosyanızı seçin.</p>
+                
+                <label class="btn-modern btn-primary text-white py-3 px-6 rounded-xl font-bold cursor-pointer inline-flex items-center gap-2 hover:scale-105">
+                    <i class="fa-solid fa-folder-open"></i> Dosya Seç
+                    <input type="file" id="manual-file-upload" accept="application/pdf" class="hidden">
+                </label>
             </div>
+
         </main>
     </div>
 
@@ -367,15 +385,20 @@
         const cursorFollower = document.getElementById('cursor-follower');
         const cursorTooltip = document.getElementById('cursor-tooltip');
         const cursorDot = document.getElementById('cursor-dot');
+        const canvasAreaEl = document.getElementById('canvas-area');
 
         document.addEventListener('mousemove', (e) => {
-            // Update Cursor Position
-            cursorFollower.style.left = e.clientX + 'px';
-            cursorFollower.style.top = e.clientY + 'px';
+            // Update Cursor Visual Position (Sadece görsel, mantık yok)
+            // Ortalamak için translate kullanıyoruz
+            cursorFollower.style.transform = `translate(${e.clientX}px, ${e.clientY}px) translate(-50%, -50%)`;
+            // left/top kullanmak yerine transform performansı artırır ve kaymayı önler
+            cursorFollower.style.left = '0';
+            cursorFollower.style.top = '0';
 
             // Tooltip Logic based on State and Hover
             if (appState === 'MEASURING') {
                 cursorFollower.classList.remove('opacity-0');
+                canvasAreaEl.style.cursor = 'none'; // Aktifken sistem imlecini gizle
                 cursorDot.style.background = currentDrawing.color || '#3b82f6';
                 
                 if (currentDrawing.points.length === 0) {
@@ -385,19 +408,35 @@
                 }
             } else if (appState === 'CALIBRATING') {
                 cursorFollower.classList.remove('opacity-0');
+                canvasAreaEl.style.cursor = 'none'; // Aktifken sistem imlecini gizle
                 cursorDot.style.background = '#f97316';
                 
                 if (hoverStartPoint) {
                     cursorTooltip.innerText = "Kapatmak için tıkla!";
-                    cursorFollower.style.transform = "translate(-50%, -50%) scale(1.2)";
+                    cursorDot.style.transform = "scale(1.5)";
                 } else {
                     cursorTooltip.innerText = "Köşe seç";
-                    cursorFollower.style.transform = "translate(-50%, -50%) scale(1)";
+                    cursorDot.style.transform = "scale(1)";
                 }
             } else {
                 cursorFollower.classList.add('opacity-0');
+                canvasAreaEl.style.cursor = 'default'; // Boştayken sistem imlecini göster
             }
         });
+
+        // --- COORDINATE FIX ---
+        // Mouse pozisyonunu Canvas'ın gerçek scale'ine ve scroll durumuna göre hesaplar
+        function getMousePos(evt) {
+            const rect = drawCanvas.getBoundingClientRect();
+            // Attribute Width ile CSS Width arasındaki oran
+            const scaleX = drawCanvas.width / rect.width;
+            const scaleY = drawCanvas.height / rect.height;
+            
+            return {
+                x: (evt.clientX - rect.left) * scaleX,
+                y: (evt.clientY - rect.top) * scaleY
+            };
+        }
 
         // --- DRAG LOGIC ---
         const floatingTable = document.getElementById("floating-results");
@@ -429,11 +468,27 @@
                 const arrayBuffer = await blob.arrayBuffer();
                 await loadPDF(new Uint8Array(arrayBuffer));
             } catch (e) {
-                console.error("Yükleme hatası:", e);
+                console.warn("Otomatik yükleme hatası:", e);
                 loadingMsg.classList.add('hidden');
-                document.getElementById('error-msg').classList.remove('hidden');
+                // Hata durumunda manuel yükleme alanını göster
+                document.getElementById('manual-upload-area').style.display = 'block';
             }
         };
+
+        // Manuel Yükleme Listener
+        document.getElementById('manual-file-upload').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            
+            loadingMsg.classList.remove('hidden');
+            document.getElementById('manual-upload-area').style.display = 'none';
+            
+            const fileReader = new FileReader();
+            fileReader.onload = function() {
+                loadPDF(new Uint8Array(this.result));
+            };
+            fileReader.readAsArrayBuffer(file);
+        });
 
         // --- PDF ENGINE ---
         async function loadPDF(data) {
@@ -450,6 +505,7 @@
                 console.error(err);
                 loadingMsg.classList.add('hidden');
                 showToast("PDF hatası!");
+                document.getElementById('manual-upload-area').style.display = 'block';
             }
         }
 
@@ -502,10 +558,8 @@
         });
         drawCanvas.addEventListener('contextmenu', e => e.preventDefault());
         drawCanvas.addEventListener('mousemove', (e) => {
-            const rect = drawCanvas.getBoundingClientRect();
-            const scaleX = drawCanvas.width / rect.width;
-            const scaleY = drawCanvas.height / rect.height;
-            mousePos = { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+            // FIX: Mouse pozisyonunu artık getMousePos ile her hareket anında tazeleyelim
+            mousePos = getMousePos(e);
 
             hoverStartPoint = false;
             if (appState === 'CALIBRATING' && currentDrawing.points.length > 2) {
@@ -526,8 +580,13 @@
 
         function handleLeftClick(e) {
             if (appState === 'IDLE') return;
+            
+            // FIX: Tıklama anında koordinatı kesinleştirelim (Scroll/Zoom sonrası kaymayı önler)
+            const clickPos = getMousePos(e);
+            
             if (appState === 'CALIBRATING' && hoverStartPoint) { finishAction(); return; }
-            currentDrawing.points.push({ x: mousePos.x, y: mousePos.y });
+            
+            currentDrawing.points.push({ x: clickPos.x, y: clickPos.y });
             redrawCanvas();
         }
 
