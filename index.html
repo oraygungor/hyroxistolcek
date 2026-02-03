@@ -16,13 +16,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; cursor: default; }
         
         #main-layout { display: flex; height: 100vh; position: relative; }
 
         /* --- GLASSMORPHISM STYLES --- */
         .glass-panel {
-            background: rgba(255, 255, 255, 0.95); /* Mobilde daha opak olsun */
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-right: 1px solid rgba(255, 255, 255, 0.5);
@@ -49,7 +49,7 @@
             height: 100%;
             left: -340px;
             transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            background: #fff; /* Fallback */
+            background: #fff;
         }
 
         @media (min-width: 768px) {
@@ -69,9 +69,9 @@
             justify-content: center;
             align-items: flex-start;
             padding: 20px;
-            cursor: default;
             width: 100%;
-            -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+            -webkit-overflow-scrolling: touch;
+            cursor: auto; 
         }
 
         #canvas-wrapper {
@@ -86,32 +86,42 @@
         
         canvas { display: block; }
         #pdf-render { z-index: 1; }
-        #draw-layer { position: absolute; top: 0; left: 0; z-index: 2; touch-action: pan-x pan-y; /* İzin ver ki scroll çalışsın */ }
+        #draw-layer { 
+            position: absolute; top: 0; left: 0; z-index: 2; 
+            touch-action: pan-x pan-y; 
+        }
 
-        /* Custom Cursor & Tooltip (Sadece Desktop) */
+        /* --- CUSTOM CURSOR (Fixed Alignment) --- */
         #cursor-follower {
             position: fixed;
+            top: 0; left: 0;
             pointer-events: none;
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            z-index: 99999;
             transition: opacity 0.1s ease-out;
+            /* Flex kaldırıldı, absolute positioning ile hizalama yapılacak */
         }
+        
         @media (hover: none) and (pointer: coarse) {
-            /* Dokunmatik cihazlarda custom cursor gizle */
             #cursor-follower { display: none !important; }
-            #canvas-area { cursor: auto !important; }
+            #canvas-area, #draw-layer { cursor: auto !important; }
         }
 
         #cursor-dot {
+            position: absolute;
+            /* Tam ortalamak için (10px genişlik -> -5px offset) */
+            top: -5px; 
+            left: -5px;
             width: 10px; height: 10px;
-            background: rgba(37, 99, 235, 0.9);
+            background: rgba(239, 68, 68, 0.9); /* Kırmızı */
             border: 2px solid white;
             border-radius: 50%;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
+
         #cursor-tooltip {
+            position: absolute;
+            top: -10px; 
+            left: 15px; /* Noktanın sağına */
             background: rgba(15, 23, 42, 0.9);
             color: white;
             padding: 4px 10px;
@@ -181,7 +191,7 @@
     </script>
 
     <!-- Custom Cursor Follower -->
-    <div id="cursor-follower" class="hidden md:flex">
+    <div id="cursor-follower" class="hidden md:block opacity-0">
         <div id="cursor-dot"></div>
         <div id="cursor-tooltip">Hazır</div>
     </div>
@@ -201,7 +211,7 @@
                         <span class="bg-blue-600 text-white rounded p-1 text-xs"><i class="fa-solid fa-vector-square"></i></span>
                         Hyrox Plan
                     </h1>
-                    <p class="text-xs text-slate-500 mt-1 font-medium ml-1">İnteraktif Ölçüm v4.0 (Mobil)</p>
+                    <p class="text-xs text-slate-500 mt-1 font-medium ml-1">İnteraktif Ölçüm v4.4</p>
                 </div>
                 <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-red-500 transition p-2">
                     <i class="fa-solid fa-xmark text-xl"></i>
@@ -355,7 +365,7 @@
         const drawCtx = drawCanvas.getContext('2d');
         const loadingMsg = document.getElementById('loading-msg');
         
-        // --- CURSOR TOOLTIP LOGIC ---
+        // --- CURSOR LOGIC (DESKTOP ONLY) ---
         const cursorFollower = document.getElementById('cursor-follower');
         const cursorTooltip = document.getElementById('cursor-tooltip');
         const cursorDot = document.getElementById('cursor-dot');
@@ -363,55 +373,54 @@
 
         document.addEventListener('mousemove', (e) => {
             // Update Cursor Visual Position
-            cursorFollower.style.transform = `translate(${e.clientX}px, ${e.clientY}px) translate(-50%, -50%)`;
-            cursorFollower.style.left = '0';
-            cursorFollower.style.top = '0';
+            // ÖNEMLİ DÜZELTME: Sadece translate(x,y) kullanarak 0,0 noktasını farenin ucuna taşıyoruz.
+            // CSS'teki top: -5px left: -5px ayarı ile nokta tam ortaya geliyor.
+            cursorFollower.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+            
+            // Eğer mouse 'draw-layer' ID'li elementin üzerindeyse VE biz ölçüm modundaysak
+            const isOverMap = e.target.id === 'draw-layer';
+            const isInteractable = appState === 'MEASURING' || appState === 'CALIBRATING';
 
-            // Tooltip Logic based on State and Hover
-            if (appState === 'MEASURING') {
+            if (isOverMap && isInteractable) {
+                // Özel imleci GÖSTER
                 cursorFollower.classList.remove('opacity-0');
-                canvasAreaEl.style.cursor = 'none'; // Aktifken sistem imlecini gizle
-                cursorDot.style.background = currentDrawing.color || '#3b82f6';
                 
-                if (currentDrawing.points.length === 0) {
-                    cursorTooltip.innerText = "Başlangıç noktasına tıkla";
-                } else {
-                    cursorTooltip.innerText = "Sıradaki nokta (Sağ tık: Bitir)";
-                }
-            } else if (appState === 'CALIBRATING') {
-                cursorFollower.classList.remove('opacity-0');
-                canvasAreaEl.style.cursor = 'none'; // Aktifken sistem imlecini gizle
-                cursorDot.style.background = '#f97316';
+                // Sistem imlecini SADECE harita üzerindeyken GİZLE
+                drawCanvas.style.cursor = 'none'; 
                 
-                if (hoverStartPoint) {
-                    cursorTooltip.innerText = "Kapatmak için tıkla!";
-                    cursorDot.style.transform = "scale(1.5)";
+                // Duruma göre imleç stilini güncelle
+                if (appState === 'MEASURING') {
+                    cursorDot.style.background = currentDrawing.color || '#3b82f6';
+                    cursorTooltip.innerText = currentDrawing.points.length === 0 ? "Başla" : "Ekle (Sağ Tık: Bitir)";
                 } else {
-                    cursorTooltip.innerText = "Köşe seç";
-                    cursorDot.style.transform = "scale(1)";
+                    cursorDot.style.background = '#f97316';
+                    cursorTooltip.innerText = hoverStartPoint ? "Kapat" : "Köşe Seç";
+                    cursorDot.style.transform = hoverStartPoint ? "scale(1.5)" : "scale(1)";
                 }
+
             } else {
+                // Harita dışında (menüde vs.) veya boşta isek
+                // Özel imleci GİZLE
                 cursorFollower.classList.add('opacity-0');
-                canvasAreaEl.style.cursor = 'default'; // Boştayken sistem imlecini göster
+                // Sistem imlecini GERİ GETİR
+                drawCanvas.style.cursor = 'default';
             }
         });
 
-        // --- COORDINATE FIX ---
+        // --- COORDINATE FIX & TOUCH SUPPORT ---
         function getMousePos(evt) {
             const rect = drawCanvas.getBoundingClientRect();
             const scaleX = drawCanvas.width / rect.width;
             const scaleY = drawCanvas.height / rect.height;
             
-            // Touch veya Mouse desteği
             let clientX = evt.clientX;
             let clientY = evt.clientY;
 
-            // Touch events varsa ilk parmağı al
+            // Touch support
             if(evt.touches && evt.touches.length > 0) {
                 clientX = evt.touches[0].clientX;
                 clientY = evt.touches[0].clientY;
             } else if (evt.changedTouches && evt.changedTouches.length > 0) {
-                 // Touchend için
                 clientX = evt.changedTouches[0].clientX;
                 clientY = evt.changedTouches[0].clientY;
             }
@@ -511,24 +520,14 @@
 
         // --- INTERACTIONS ---
         
-        // MOUSE / TOUCH Handler
-        // Click ve TouchStart kullanarak hem masaüstü hem mobilde en iyi deneyimi sağlıyoruz.
-        drawCanvas.addEventListener('click', (e) => {
-            handleAction(e);
-        });
-
-        // Touchstart sadece koordinat güncellemek için (hover efekti yok ama kodun çalışması için)
-        drawCanvas.addEventListener('touchstart', (e) => {
-           // Scroll'u engellemiyoruz, kullanıcı kaydırabilmeli.
-           // Nokta koymak için 'click' (tap) yeterli.
-           mousePos = getMousePos(e); 
-        });
-
-        drawCanvas.addEventListener('contextmenu', (e) => {
-            e.preventDefault(); 
-            finishAction(); 
-        });
+        // MOUSE & TOUCH Handling
+        // Click: Point placement
+        drawCanvas.addEventListener('click', (e) => handleAction(e));
         
+        // Context Menu: Finish (Right click)
+        drawCanvas.addEventListener('contextmenu', (e) => { e.preventDefault(); finishAction(); });
+
+        // Mouse Move: Hover effects (Desktop)
         drawCanvas.addEventListener('mousemove', (e) => {
             mousePos = getMousePos(e);
             hoverStartPoint = false;
@@ -538,6 +537,12 @@
                 if (dist < 15) hoverStartPoint = true;
             }
             redrawCanvas();
+        });
+
+        // Touch Start: Update pos for mobile (no hover)
+        drawCanvas.addEventListener('touchstart', (e) => {
+             // Scroll engelleme yok, sadece pozisyon al
+             mousePos = getMousePos(e);
         });
 
         document.addEventListener('keydown', (e) => {
@@ -551,7 +556,7 @@
         function handleAction(e) {
             if (appState === 'IDLE') return;
             
-            // Koordinatı olay anında al
+            // Get fresh coordinates
             const pos = getMousePos(e);
             
             if (appState === 'CALIBRATING' && hoverStartPoint) { finishAction(); return; }
@@ -805,6 +810,7 @@
                 ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
                 ctx.drawImage(pdfCanvas, 0, 0); ctx.drawImage(drawCanvas, 0, 0);
 
+                // Add Table to PDF
                 ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
                 ctx.shadowColor = "rgba(0,0,0,0.2)"; ctx.shadowBlur = 10;
                 const boxH = 50 + (measurements.length * 25);
