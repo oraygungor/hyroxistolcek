@@ -22,11 +22,11 @@
 
         /* --- GLASSMORPHISM STYLES --- */
         .glass-panel {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.98); /* Daha opak, okuma kolaylığı için */
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-right: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 4px 0 24px rgba(0,0,0,0.05);
+            box-shadow: 4px 0 24px rgba(0,0,0,0.1);
         }
 
         .glass-floating {
@@ -38,48 +38,77 @@
             border-radius: 16px;
         }
         
-        /* Sol Panel (Sidebar) */
+        /* --- AUTO-HIDE SIDEBAR --- */
         #sidebar {
             width: 320px;
             display: flex;
             flex-direction: column;
-            z-index: 40;
+            z-index: 900; /* Haritanın ve UI elementlerinin üzerinde */
             flex-shrink: 0;
             position: absolute;
             height: 100%;
-            left: -340px;
-            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            left: 0;
+            top: 0;
+            /* Varsayılan: Gizli (Sadece 15px'lik tetikleyici alan kalsın) */
+            transform: translateX(-305px); 
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             background: #fff;
         }
 
+        /* Hover durumunda açıl */
+        #sidebar:hover {
+            transform: translateX(0);
+        }
+
+        /* Görsel Tutamaç (Handle) - Kullanıcı menünün orada olduğunu bilsin */
+        #sidebar::after {
+            content: '';
+            position: absolute;
+            right: -12px; /* Dışarıya taşır */
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0,0,0,0.1);
+            border-left: none;
+            border-radius: 0 10px 10px 0;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='9 18 15 12 9 6'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 16px;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.05);
+            cursor: pointer;
+            pointer-events: auto; /* Tıklanabilsin */
+        }
+        
+        /* Menü açıldığında handle gizlensin veya şekil değiştirsin (Opsiyonel) */
+        #sidebar:hover::after {
+            opacity: 0; /* Açılınca handle'a gerek yok */
+        }
+
         @media (min-width: 768px) {
-            #sidebar { position: relative; left: 0 !important; }
             #mobile-menu-toggle { display: none !important; }
         }
 
-        #sidebar.open { left: 0; box-shadow: 10px 0 50px rgba(0,0,0,0.2); }
-
-        /* Orta Alan - PAN FIXED */
+        /* Orta Alan - TAM EKRAN */
         #canvas-area {
             flex-grow: 1;
             background: radial-gradient(circle at center, #e2e8f0 0%, #cbd5e1 100%);
             position: relative;
-            overflow: auto; /* Scroll barlar */
+            overflow: auto;
             display: block; 
             padding: 0;
             width: 100%;
             height: 100%;
             -webkit-overflow-scrolling: touch;
             cursor: grab;
+            /* Sidebar artık üstte yüzdüğü için margin gerekmez */
         }
         
-        #canvas-area:active {
-            cursor: grabbing; 
-        }
+        #canvas-area:active { cursor: grabbing; }
 
-        /* İçerik Ortalaması ve Scroll Yönetimi */
         #canvas-content-centerer {
-            /* Bu ayarlar içeriğin kaydırılabilir olmasını sağlar */
             width: fit-content; 
             height: fit-content;
             min-width: 100%;
@@ -95,9 +124,9 @@
             position: relative;
             box-shadow: 0 20px 50px rgba(0,0,0,0.15);
             border-radius: 4px;
-            overflow: hidden;
+            overflow: visible; 
             display: block;
-            margin: auto; /* Flex içinde güvenli ortalama */
+            margin: auto;
             transition: transform 0.1s ease-out;
         }
 
@@ -119,89 +148,72 @@
         
         @media (hover: none) and (pointer: coarse) {
             #cursor-follower { display: none !important; }
-            #canvas-content-centerer, #draw-layer { cursor: auto !important; }
+            #canvas-content-centerer, #draw-layer { cursor: crosshair !important; }
         }
 
-        /* Yeni Artı (+) İmleç */
         #cursor-dot {
             position: absolute;
-            top: -15px; left: -15px;
-            width: 30px; height: 30px;
+            top: -20px; left: -20px;
+            width: 40px; height: 40px;
             background: transparent;
         }
         #cursor-dot::before, #cursor-dot::after {
             content: '';
             position: absolute;
-            background-color: #ef4444; /* Kırmızı */
-            box-shadow: 0 0 2px rgba(255,255,255,0.8);
+            background-color: #ef4444; 
+            box-shadow: 0 0 2px rgba(255,255,255,1); 
         }
-        /* Dikey çizgi */
-        #cursor-dot::before {
-            top: 0; left: 50%; width: 2px; height: 100%; transform: translateX(-50%);
-        }
-        /* Yatay çizgi */
-        #cursor-dot::after {
-            top: 50%; left: 0; width: 100%; height: 2px; transform: translateY(-50%);
-        }
+        #cursor-dot::before { top: 0; left: 50%; width: 2px; height: 100%; transform: translateX(-50%); }
+        #cursor-dot::after { top: 50%; left: 0; width: 100%; height: 2px; transform: translateY(-50%); }
 
-        #cursor-tooltip {
+        /* --- MINI MENU --- */
+        #mini-action-menu {
             position: absolute;
-            top: -30px; 
-            left: 20px; 
-            background: rgba(15, 23, 42, 0.9);
-            color: white;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 500;
-            white-space: nowrap;
-            backdrop-filter: blur(4px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-
-        /* Sidebar Result List Styles */
-        .result-row {
+            z-index: 1000;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            background: #fff;
-            border: 1px solid #f1f5f9;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            transition: all 0.2s;
+            gap: 4px;
+            padding: 4px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            pointer-events: auto; 
+            transform: translate(-50%, -100%);
+            opacity: 0;
+            transition: opacity 0.2s, top 0.1s, left 0.1s;
+            margin-top: -15px; 
         }
-        .result-row:hover { background: #f8fafc; border-color: #e2e8f0; }
-        .color-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; box-shadow: 0 0 0 2px rgba(255,255,255,1); }
+        #mini-action-menu.visible { opacity: 1; }
+
+        .mini-btn {
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; cursor: pointer; transition: all 0.2s;
+            border: none; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .mini-btn:hover { transform: scale(1.15); }
+        .mini-btn:active { transform: scale(0.95); }
+        .btn-check { background: #10b981; }
+        .btn-undo { background: #64748b; }
+        .btn-cancel { background: #ef4444; }
 
         /* Zoom Controls */
         #zoom-controls {
             position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 8px; padding: 6px;
-            z-index: 30;
+            display: flex; gap: 8px; padding: 6px; z-index: 30;
         }
 
-        /* Buttons */
-        .btn-modern {
-            transition: all 0.2s ease;
-            position: relative;
-            overflow: hidden;
-        }
+        /* General UI */
+        .btn-modern { transition: all 0.2s ease; position: relative; overflow: hidden; }
         .btn-modern:active { transform: scale(0.98); }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-        }
+        .btn-primary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+        .result-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #fff; border: 1px solid #f1f5f9; border-radius: 8px; margin-bottom: 8px; transition: all 0.2s; }
+        .result-row:hover { background: #f8fafc; border-color: #e2e8f0; }
+        .color-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; box-shadow: 0 0 0 2px rgba(255,255,255,1); }
 
-        /* Modal */
-        .modal-overlay {
-            background: rgba(15, 23, 42, 0.4);
-            backdrop-filter: blur(4px);
-        }
-        
+        .modal-overlay { background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); }
         #manual-upload-area { display: none; }
-
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
@@ -218,34 +230,23 @@
     <!-- Custom Cursor Follower -->
     <div id="cursor-follower" class="hidden md:block opacity-0">
         <div id="cursor-dot"></div>
-        <div id="cursor-tooltip">Hazır</div>
     </div>
 
     <div id="main-layout">
         
-        <button id="mobile-menu-toggle" onclick="toggleSidebar()" class="absolute top-4 left-4 z-50 glass-floating p-3 text-slate-700 shadow-lg border border-slate-200">
-            <i class="fa-solid fa-bars text-lg"></i>
-        </button>
-
-        <!-- SOL PANEL -->
+        <!-- SOL PANEL (AUTO HIDE) -->
         <aside id="sidebar" class="glass-panel h-full flex flex-col">
-            <!-- Header -->
             <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-white/40">
                 <div>
                     <h1 class="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
                         <span class="bg-blue-600 text-white rounded p-1 text-xs"><i class="fa-solid fa-vector-square"></i></span>
                         Hyrox Plan
                     </h1>
-                    <p class="text-xs text-slate-500 mt-1 font-medium ml-1">Sürekli Ölçüm Modu</p>
+                    <p class="text-xs text-slate-500 mt-1 font-medium ml-1">İnteraktif Ölçüm v5.2</p>
                 </div>
-                <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-red-500 transition p-2">
-                    <i class="fa-solid fa-xmark text-xl"></i>
-                </button>
             </div>
 
-            <!-- Scrollable Content -->
             <div class="flex-1 overflow-y-auto p-6 space-y-6">
-                
                 <!-- Durum Kartı -->
                 <div class="bg-white/60 p-4 rounded-xl border border-white shadow-sm">
                     <div class="flex justify-between items-center mb-2">
@@ -253,10 +254,7 @@
                         <span id="status-badge" class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold">Ölçüme Hazır</span>
                     </div>
                     <div class="text-xs text-slate-500 mt-2">
-                        <p><strong class="text-slate-700">Sol Tık:</strong> Nokta Ekle</p>
-                        <p><strong class="text-slate-700">Sağ Tık / ESC:</strong> İptal Et</p>
-                        <p><strong class="text-slate-700">Enter / Çift Tık:</strong> Kaydet</p>
-                        <p><strong class="text-slate-700">Sürükle:</strong> Haritayı Kaydır</p>
+                        Haritaya tıklayarak çizime başlayın. Menüyü açmak için fareyi sol kenara getirin.
                     </div>
                 </div>
 
@@ -272,7 +270,6 @@
                     </div>
                 </div>
                 
-                <!-- Alt Butonlar -->
                 <div class="grid grid-cols-2 gap-3 mt-4">
                     <button onclick="downloadResultPDF()" class="btn-modern bg-slate-800 hover:bg-slate-900 text-white py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2">
                         <i class="fa-solid fa-file-export"></i> PDF İndir
@@ -281,10 +278,8 @@
                         <i class="fa-regular fa-trash-can"></i> Temizle
                     </button>
                 </div>
-
             </div>
 
-            <!-- Footer Stats -->
             <div class="mt-auto p-6 bg-slate-50/50 border-t border-slate-100">
                  <div class="flex justify-between items-baseline">
                     <span class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Toplam Metraj</span>
@@ -299,10 +294,17 @@
                 <div id="canvas-wrapper">
                     <canvas id="pdf-render"></canvas>
                     <canvas id="draw-layer"></canvas>
+                    
+                    <!-- MİNİ MENÜ -->
+                    <div id="mini-action-menu">
+                        <button onclick="completeMeasurement(event)" class="mini-btn btn-check" title="Kaydet"><i class="fa-solid fa-check"></i></button>
+                        <button onclick="undoLastPoint(event)" class="mini-btn btn-undo" title="Son Noktayı Sil"><i class="fa-solid fa-rotate-left"></i></button>
+                        <button onclick="cancelAction(event)" class="mini-btn btn-cancel" title="İptal Et"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Bottom Zoom Bar -->
+            <!-- Zoom Controls -->
             <div id="zoom-controls" class="glass-floating px-2 py-2">
                 <button onclick="changeZoom(-0.1)" class="w-9 h-9 flex items-center justify-center hover:bg-slate-100 rounded-lg text-slate-600 transition"><i class="fa-solid fa-minus"></i></button>
                 <span id="zoom-level" class="text-xs font-mono font-bold w-12 text-center text-slate-600 pt-2">100%</span>
@@ -311,7 +313,6 @@
                 <button onclick="fitToScreen()" class="px-3 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-lg transition">SIĞDIR</button>
             </div>
 
-            <!-- Loaders & Errors -->
             <div id="loading-msg" class="absolute inset-0 flex flex-col items-center justify-center bg-slate-100/80 z-50 backdrop-blur-sm hidden">
                 <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
                 <p class="text-slate-600 font-bold animate-pulse">Plan Yükleniyor...</p>
@@ -322,7 +323,7 @@
                     <i class="fa-solid fa-cloud-arrow-up text-2xl"></i>
                 </div>
                 <h3 class="text-lg font-bold text-slate-800 mb-2">Dosya Bulunamadı</h3>
-                <p class="text-sm text-slate-500 mb-6">Otomatik yükleme başarısız oldu.<br>Lütfen kendi PDF dosyanızı seçin.</p>
+                <p class="text-sm text-slate-500 mb-6">Lütfen kendi PDF dosyanızı seçin.</p>
                 <label class="btn-modern btn-primary text-white py-3 px-6 rounded-xl font-bold cursor-pointer inline-flex items-center gap-2 hover:scale-105">
                     <i class="fa-solid fa-folder-open"></i> Dosya Seç
                     <input type="file" id="manual-file-upload" accept="application/pdf" class="hidden">
@@ -337,7 +338,7 @@
             <h3 class="text-lg font-bold text-slate-800 mb-2">Kaydet</h3>
             <p class="text-sm text-slate-500 mb-4">Ölçüm ismi:</p>
             <input type="text" id="measure-name-input" class="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-700 font-medium" placeholder="Örn: Koşu Yolu">
-            <button onclick="saveMeasurementName()" class="w-full btn-primary text-white py-3 rounded-xl font-bold shadow-lg">Kaydet ve Devam Et</button>
+            <button onclick="saveMeasurementName()" class="w-full btn-primary text-white py-3 rounded-xl font-bold shadow-lg">Kaydet</button>
         </div>
     </div>
 
@@ -366,17 +367,15 @@
 
         let measurements = [];
         let currentDrawing = { points: [], color: null };
-        let appState = 'MEASURING'; // Başlangıçta direkt ölçüm modu
+        let appState = 'MEASURING'; 
         let isRendering = false;
         let mousePos = { x: 0, y: 0 };
         let hoverStartPoint = false; 
         
-        // Panning
         let isDraggingMap = false;
         let panStart = { x: 0, y: 0 };
         let scrollStart = { x: 0, y: 0 };
 
-        // Colors
         const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#6366f1'];
 
         const canvasWrapper = document.getElementById('canvas-wrapper');
@@ -385,8 +384,9 @@
         const drawCtx = drawCanvas.getContext('2d');
         const canvasAreaEl = document.getElementById('canvas-area');
         const loadingMsg = document.getElementById('loading-msg');
+        const miniMenu = document.getElementById('mini-action-menu');
         
-        // --- ZOOM & PAN ---
+        // --- EVENT LISTENERS ---
         
         canvasAreaEl.addEventListener('wheel', (e) => {
             if (e.ctrlKey) return; 
@@ -396,7 +396,9 @@
         }, { passive: false });
 
         canvasAreaEl.addEventListener('mousedown', (e) => {
-            if(e.button !== 0) return; // Only left click for pan start check
+            if(e.button !== 0) return; 
+            if(e.target.closest('.mini-btn')) return;
+            
             isDraggingMap = false;
             panStart = { x: e.clientX, y: e.clientY };
             scrollStart = { x: canvasAreaEl.scrollLeft, y: canvasAreaEl.scrollTop };
@@ -404,13 +406,13 @@
         });
 
         window.addEventListener('mousemove', (e) => {
-            // Drag logic
             if(e.buttons === 1) {
                 const dx = e.clientX - panStart.x;
                 const dy = e.clientY - panStart.y;
                 if(!isDraggingMap && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
                     isDraggingMap = true;
                     document.getElementById('cursor-follower').classList.add('opacity-0');
+                    miniMenu.classList.remove('visible'); 
                 }
                 if(isDraggingMap) {
                     canvasAreaEl.scrollLeft = scrollStart.x - dx;
@@ -421,16 +423,13 @@
 
         window.addEventListener('mouseup', () => {
             canvasAreaEl.style.cursor = 'default';
-            // Click handler'a geçmeden önce isDraggingMap kontrolü için gecikmeli reset
             setTimeout(() => { isDraggingMap = false; }, 50);
         });
 
         // --- CURSOR LOGIC ---
         const cursorFollower = document.getElementById('cursor-follower');
-        const cursorTooltip = document.getElementById('cursor-tooltip');
 
         document.addEventListener('mousemove', (e) => {
-            // Update Visual Position
             cursorFollower.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
             
             const isOverMap = e.target.id === 'draw-layer';
@@ -438,12 +437,6 @@
             if (isOverMap && !isDraggingMap && e.buttons !== 1) {
                 cursorFollower.classList.remove('opacity-0');
                 drawCanvas.style.cursor = 'none'; 
-                
-                if (appState === 'MEASURING') {
-                    cursorTooltip.innerText = currentDrawing.points.length === 0 ? "Başla" : "Ekle (Sağ Tık: İptal)";
-                } else if (appState === 'CALIBRATING') {
-                    cursorTooltip.innerText = hoverStartPoint ? "Bitir" : "Köşe";
-                }
             } else {
                 cursorFollower.classList.add('opacity-0');
                 drawCanvas.style.cursor = isDraggingMap ? 'grabbing' : 'default';
@@ -460,25 +453,18 @@
             let clientY = evt.clientY;
 
             if(evt.touches && evt.touches.length > 0) {
-                clientX = evt.touches[0].clientX;
-                clientY = evt.touches[0].clientY;
+                clientX = evt.touches[0].clientX; clientY = evt.touches[0].clientY;
             } else if (evt.changedTouches && evt.changedTouches.length > 0) {
-                clientX = evt.changedTouches[0].clientX;
-                clientY = evt.changedTouches[0].clientY;
+                clientX = evt.changedTouches[0].clientX; clientY = evt.changedTouches[0].clientY;
             }
 
-            return {
-                x: (clientX - rect.left) * scaleX,
-                y: (clientY - rect.top) * scaleY
-            };
+            return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
         }
 
         // --- INIT ---
         window.onload = async function() {
             loadingMsg.classList.remove('hidden');
-            // Başlangıç rengini ayarla
             setupNextDrawing();
-            
             try {
                 const response = await fetch(CONFIG.pdfPath);
                 if (!response.ok) throw new Error("Dosya bulunamadı");
@@ -523,7 +509,6 @@
 
         function fitToScreen() {
             if (!pdfDoc) return;
-            // İçerik ortalamayı garantilemek için CSS genişlikleri %100, canvas boyutunu JS ayarlar
             const containerWidth = document.getElementById('canvas-area').clientWidth;
             const availableWidth = containerWidth > 600 ? containerWidth * 0.90 : containerWidth; 
             const newScale = availableWidth / baseViewportWidth;
@@ -561,6 +546,8 @@
                 }
             }
             
+            canvasWrapper.style.transform = 'translateX(0)'; // Reset transform
+            
             redrawCanvas();
             isRendering = false;
         }
@@ -569,17 +556,15 @@
         
         drawCanvas.addEventListener('click', (e) => {
             if (isDraggingMap) return;
+            if(e.target.closest('.mini-btn')) return;
             handleAction(e);
         });
         
         drawCanvas.addEventListener('dblclick', (e) => {
-            if(appState === 'MEASURING') completeMeasurement(); // Çift tıkla bitir
+            if(appState === 'MEASURING') completeMeasurement(e); 
         });
 
-        drawCanvas.addEventListener('contextmenu', (e) => { 
-            e.preventDefault(); 
-            cancelAction(); // Sağ tık iptal
-        });
+        drawCanvas.addEventListener('contextmenu', (e) => { e.preventDefault(); cancelAction(e); });
 
         drawCanvas.addEventListener('mousemove', (e) => {
             if (!isDraggingMap && e.buttons !== 1) {
@@ -596,34 +581,32 @@
 
         drawCanvas.addEventListener('touchstart', (e) => { mousePos = getMousePos(e); });
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') cancelAction();
-            if (e.key === 'Enter') {
-                if (!document.getElementById('name-modal').classList.contains('hidden')) {
-                    saveMeasurementName();
-                } else if (!document.getElementById('area-modal').classList.contains('hidden')) {
-                    closeAreaModal(true);
-                } else if(appState === 'MEASURING' && currentDrawing.points.length > 1) {
-                    completeMeasurement();
-                }
-            }
-        });
-
         function handleAction(e) {
-            // Sürekli ölçüm modu (varsayılan)
             const pos = getMousePos(e);
-            
             if (appState === 'CALIBRATING') {
                 if(hoverStartPoint) finishCalibration();
-                else { currentDrawing.points.push({ x: pos.x, y: pos.y }); redrawCanvas(); }
+                else { 
+                    currentDrawing.points.push({ x: pos.x, y: pos.y }); 
+                    updateMiniMenuPosition(); 
+                    redrawCanvas(); 
+                }
             } else {
-                // MEASURING
                 currentDrawing.points.push({ x: pos.x, y: pos.y });
+                updateMiniMenuPosition(); 
                 redrawCanvas();
             }
         }
 
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+        function updateMiniMenuPosition() {
+            if (currentDrawing.points.length > 0 && appState === 'MEASURING') {
+                const lastPt = currentDrawing.points[currentDrawing.points.length - 1];
+                miniMenu.style.left = lastPt.x + 'px';
+                miniMenu.style.top = (lastPt.y - 45) + 'px'; // Biraz yukarı
+                miniMenu.classList.add('visible');
+            } else {
+                miniMenu.classList.remove('visible');
+            }
+        }
 
         // --- CORE LOGIC ---
         
@@ -633,24 +616,34 @@
             appState = 'MEASURING';
             document.getElementById('status-badge').innerText = "Ölçüme Hazır";
             document.getElementById('status-badge').className = "text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-bold";
+            miniMenu.classList.remove('visible'); 
         }
 
-        function cancelAction() {
+        function cancelAction(e) {
+            if(e) e.stopPropagation();
             if (currentDrawing.points.length > 0) {
-                // Sadece mevcut çizimi temizle, moddan çıkma
                 currentDrawing.points = [];
                 redrawCanvas();
-                showToast("Çizim iptal edildi");
+                miniMenu.classList.remove('visible');
+                showToast("Sıfırlandı");
             } else if (appState === 'CALIBRATING') {
-                // Kalibrasyondan çıkış
                 setupNextDrawing();
                 showToast("Ölçüm moduna dönüldü");
             }
         }
 
-        function completeMeasurement() {
+        function undoLastPoint(e) {
+            if(e) e.stopPropagation();
+            if (currentDrawing.points.length > 0) {
+                currentDrawing.points.pop();
+                updateMiniMenuPosition(); 
+                redrawCanvas();
+            }
+        }
+
+        function completeMeasurement(e) {
+            if(e) e.stopPropagation();
             if (currentDrawing.points.length > 1) {
-                // İsim Modalını Aç
                 document.getElementById('measure-name-input').value = `Ölçüm ${measurements.length + 1}`;
                 document.getElementById('name-modal').classList.remove('hidden');
                 document.getElementById('measure-name-input').focus();
@@ -663,15 +656,6 @@
             showToast("Referans alanın köşelerini seçin");
             document.getElementById('status-badge').innerText = "Kalibrasyon Modu";
             document.getElementById('status-badge').className = "text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold";
-            document.getElementById('sidebar').classList.remove('open');
-        }
-
-        function startMeasurementMode() {
-            // Butonla manuel tetiklenirse
-            if (!baseScaleFactor) { showToast("Ölçek faktörü hatası!"); return; }
-            setupNextDrawing();
-            showToast("Ölçüm başladı");
-            document.getElementById('sidebar').classList.remove('open');
         }
 
         // --- CALIBRATION ---
@@ -694,7 +678,7 @@
                     showToast("Yeni ölçek: " + baseScaleFactor.toFixed(2));
                 }
             }
-            setupNextDrawing(); // Her durumda ölçüm moduna dön
+            setupNextDrawing(); 
             redrawCanvas();
         }
 
@@ -717,11 +701,9 @@
             
             document.getElementById('name-modal').classList.add('hidden');
             updateMeasurementList(); 
-            
-            // HEMEN YENİ ÖLÇÜM İÇİN HAZIRLA
             setupNextDrawing();
             redrawCanvas();
-            showToast("Kaydedildi. Yeni ölçüme hazır.");
+            showToast("Kaydedildi.");
         }
 
         function updateMeasurementList() {
@@ -763,27 +745,22 @@
             drawCtx.shadowBlur = 4;
             drawCtx.shadowOffsetX = 1; drawCtx.shadowOffsetY = 1;
 
-            // Saved measurements
+            updateMiniMenuPosition();
+
             measurements.forEach(m => drawPolyline(m.points, m.color, m.length, false));
 
-            // Current Drawing
             if (currentDrawing.points.length > 0) {
-                // Live calc
                 let liveLen = 0;
                 if (appState === 'MEASURING' && baseScaleFactor) {
                     let totalPx = 0;
                     for(let i=1; i<currentDrawing.points.length; i++) totalPx += Math.hypot(currentDrawing.points[i].x - currentDrawing.points[i-1].x, currentDrawing.points[i].y - currentDrawing.points[i-1].y);
                     const lastP = currentDrawing.points[currentDrawing.points.length-1];
-                    // Mouse pos valid?
                     if(mousePos.x !== 0 && mousePos.y !== 0 && !isDraggingMap) {
                          totalPx += Math.hypot(mousePos.x - lastP.x, mousePos.y - lastP.y);
                     }
                     liveLen = totalPx / (baseScaleFactor * currentScale);
                 }
-                
                 drawPolyline(currentDrawing.points, currentDrawing.color, liveLen, true);
-                
-                // Calibration Preview
                 if (appState === 'CALIBRATING' && hoverStartPoint) {
                     drawCtx.beginPath();
                     drawCtx.moveTo(currentDrawing.points[0].x, currentDrawing.points[0].y);
@@ -798,37 +775,26 @@
 
         function drawPolyline(points, color, lengthVal, isActive) {
             if (points.length === 0) return;
-
             drawCtx.beginPath();
-            drawCtx.lineWidth = 4; 
-            drawCtx.strokeStyle = color;
+            drawCtx.lineWidth = 4; drawCtx.strokeStyle = color;
             drawCtx.moveTo(points[0].x, points[0].y);
             for (let i = 1; i < points.length; i++) drawCtx.lineTo(points[i].x, points[i].y);
-            
             if (isActive && mousePos.x !== 0 && !isDraggingMap) { 
                 drawCtx.lineTo(mousePos.x, mousePos.y);
                 drawCtx.setLineDash([8, 6]); drawCtx.stroke(); drawCtx.setLineDash([]);
-            } else {
-                drawCtx.stroke();
-            }
+            } else { drawCtx.stroke(); }
 
             points.forEach((p, idx) => {
-                drawCtx.beginPath();
-                drawCtx.arc(p.x, p.y, 5, 0, Math.PI * 2);
-                drawCtx.fillStyle = '#ffffff'; drawCtx.fill();
-                drawCtx.lineWidth = 2; drawCtx.stroke();
+                drawCtx.beginPath(); drawCtx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+                drawCtx.fillStyle = '#ffffff'; drawCtx.fill(); drawCtx.lineWidth = 2; drawCtx.stroke();
             });
 
             if (typeof lengthVal === 'number' && lengthVal > 0) {
                 const label = `${lengthVal.toFixed(2)}m`;
                 let lx, ly;
-                if (isActive) {
-                    lx = mousePos.x + 15; ly = mousePos.y - 15;
-                } else if (points.length === 2) {
-                    lx = (points[0].x + points[1].x) / 2; ly = (points[0].y + points[1].y) / 2;
-                } else {
-                    lx = points[0].x; ly = points[0].y - 15;
-                }
+                if (isActive) { lx = mousePos.x + 15; ly = mousePos.y - 15; } 
+                else if (points.length === 2) { lx = (points[0].x + points[1].x) / 2; ly = (points[0].y + points[1].y) / 2; } 
+                else { lx = points[0].x; ly = points[0].y - 15; }
                 if(lx && ly && !isDraggingMap) drawLabelBadge(lx, ly, label, color);
             }
         }
